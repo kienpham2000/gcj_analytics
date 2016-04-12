@@ -1,14 +1,51 @@
 # gcj_analytics
-Google Code Jam Analytics
+Google Code Jam Analytics for **Qualification Round 2016**
 
-## Top 30 came from:
-| Country | # in top 30 |
+## Overview
+**What is Google Code Jam?**
+It's a yearly coding challenge to test your coding skill. [more info...](https://code.google.com/codejam)
+
+This page is auto-generated for contest id: 6254486. Generate your own:
+
+    # install this awesome package
+    $ pip install gcj_analytics
+
+    # run this command to generate this page
+    $ gcj_analytics 6254486
+
+## Participants
+How many people participated: **27170**
+
+## Programing Language Stats
+How many different programming language being used: **xxx**
+
+Top 30 most used programming language: **xxx**
+
+Top 30 people used these programming language: **xxx**
+
+## Countries Stats
+
+How many countries participated: **xxx**
+
+Top 30 person came from these 15 countries:
+
+| Country | # person in top 30 |
 | --------| ----------- |
 | South Africa | 1 |
 | Canada | 1 |
-| Total | 30 |
-
-('Netherlands', 1), ('Poland', 1), ('Japan', 1), ('Israel', 1), ('Belarus', 1), ('Finland', 1), ('Indonesia', 2), ('Belgium', 2), ('Australia', 2), ('Brazil', 2), ('China', 3), ('United States', 5), ('Russia', 6)]
+| Netherlands | 1 |
+| Poland | 1 |
+| Japan | 1 |
+| Israel | 1 |
+| Belarus | 1 |
+| Finland | 1 |
+| Indonesia | 2 |
+| Belgium | 2 |
+| Australia | 2 |
+| Brazil | 2 |
+| China | 3 |
+| United States | 5 |
+| Russia | 6 |
 
 ## Notes
 ### main index page

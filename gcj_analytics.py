@@ -6,6 +6,36 @@ import json
 import grequests
 import yaml
 from zipfile import ZipFile
+import argparse
+
+
+def download_scoreboard():
+    pos = 1
+    # pos = 99999999
+    url = "https://code.google.com/codejam/contest/{}/scoreboard/do/?cmd=GetScoreboard&contest_id={}&show_type=all&start_pos=".format(contest_id, contest_id)
+
+    while True:
+        urls = ["{}{}".format(url, x) for x in range(pos, pos+threads)]
+        rs = (grequests.get(u) for u in urls)
+        res = grequests.map(rs)
+        print("pos {} out of {}: {}%".format(pos, total_participated, int(pos/total_participated*100)))
+
+        for each_res in res:
+            try:
+                each_res_data = each_res.json()
+            except AttributeError:
+                print(each_res_data)
+                continue
+
+            # {"err": "invalid value for parameter sp"}
+            if 'err' in each_res_data:
+                exit('Done!')
+
+            total_participated = each_res_data['stat']['nrp']
+            with open('raw/scoreboard.json', 'a+') as f:
+                print("{}".format(json.dumps(each_res_data)), file=f)
+            # exit()
+        pos += threads
 
 
 def download_source_code():
@@ -54,46 +84,32 @@ def detect_programming_language(file_path):
     return languages
 
 if __name__ == '__main__':
-    download_source_code()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--task", help="What task to run", required=True)
+    parser.add_argument("--contest", help="The contest id", required=True)
+    args = parser.parse_args()
+    task = args.contest
+    print(task)
     exit()
-
-    detect_programming_language()
-    exit()
-
-
-    contest_id = '6254486' if len(sys.argv) < 2 else sys.argv[1]
     total_participated = 1
     countries = {}
     countries_top_30 = {}
     users = {}
     threads = 100
 
-    pos = 1
-    # pos = 99999999
-    url = "https://code.google.com/codejam/contest/{}/scoreboard/do/?cmd=GetScoreboard&contest_id={}&show_type=all&start_pos=".format(contest_id, contest_id)
+    contest_id = '6254486' if len(sys.argv) < 2 else sys.argv[1]
 
-    while True:
-        urls = ["{}{}".format(url, x) for x in range(pos, pos+threads)]
-        rs = (grequests.get(u) for u in urls)
-        res = grequests.map(rs)
-        print("pos {} out of {}: {}%".format(pos, total_participated, int(pos/total_participated*100)))
+    download_scoreboard(contest_id)
+    exit()
 
-        for each_res in res:
-            try:
-                each_res_data = each_res.json()
-            except AttributeError:
-                print(each_res_data)
-                continue
+    # download_source_code()
+    # exit()
 
-            # {"err": "invalid value for parameter sp"}
-            if 'err' in each_res_data:
-                exit('Done!')
+    # detect_programming_language()
+    # exit()
 
-            total_participated = each_res_data['stat']['nrp']
-            with open('raw/scoreboard.json', 'a+') as f:
-                print("{}".format(json.dumps(each_res_data)), file=f)
-            # exit()
-        pos += threads
+
+
     exit()
 
     stats = page_data['stat']
@@ -105,10 +121,11 @@ if __name__ == '__main__':
             'penalty': row['pen'],
             'avatar': row['fu'],
         }
+
         countries[row['c']] = countries[row['c']] + 1 if row['c'] in countries else 1
 
     if pos == 1:
         countries_top_30 = sorted(countries.items(), key=operator.itemgetter(1), reverse=True)
 
-    print(countries_top_30)
+    # print(countries_top_30)
     # print(stats)

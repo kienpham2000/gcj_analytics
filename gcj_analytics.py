@@ -8,6 +8,7 @@ import yaml
 from zipfile import ZipFile
 import argparse
 
+
 def download_scoreboard():
     pos = 1
     # pos = 99999999
@@ -84,12 +85,12 @@ def detect_programming_language(file_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.parse_args()
-    parser.add_argument("echo")
+    parser.add_argument("--task", help="What task to run", required=True)
+    parser.add_argument("--contest", help="The contest id", required=True)
     args = parser.parse_args()
-    print(args.echo)
+    task = args.contest
+    print(task)
     exit()
-
     total_participated = 1
     countries = {}
     countries_top_30 = {}

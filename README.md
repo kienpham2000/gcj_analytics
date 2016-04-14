@@ -1,22 +1,16 @@
-# gcj_analytics
-Google Code Jam Analytics for **Qualification Round 2016**
+# Google Code Jam Analytics
 
 ## Overview
 **What is Google Code Jam?**
 It's a yearly coding challenge to test your coding skill. [more info...](https://code.google.com/codejam)
 
-This page is auto-generated for contest id: 6254486. Generate your own:
+## Analysis for Qualification Round 2016
+contest id 6254486
 
-    # install this awesome package
-    $ pip install gcj_analytics
-
-    # run this command to generate this page
-    $ gcj_analytics 6254486
-
-## Participants
+### Participants
 How many people participated: **27170**
 
-## Programing Language Stats
+### Programing Language Stats
 How many different programming language being used: **xxx**
 
 Top 30 most used programming language: **xxx**
@@ -46,6 +40,15 @@ Top 30 person came from these 15 countries:
 | China | 3 |
 | United States | 5 |
 | Russia | 6 |
+
+## How to do your own analysis
+There are two set of raw data you can download: the scoreboard and the submission source code.
+
+    # Download the scoreboard for a specific contest
+    $ python gcj_analytics.py --contest-id 6254486 --task download-scoreboard
+
+    # Download all code submission
+    $ python gcj_analytics.py --contest-id 6254486 --task download-source-code
 
 ## Notes
 ### main index page

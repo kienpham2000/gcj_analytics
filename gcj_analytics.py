@@ -29,15 +29,21 @@ class GCJ:
 
     def download_scoreboard(self):
         pos = 1
-        params = {"cmd": "GetScoreboard", "contest_id": self.contest_id, "show_type": "all", "start_pos": pos}
+        records_per_page = 30
         total = self.get_total_participants()
 
         with open('raw/scoreboard.json', 'w') as f:
             while True:
-                params["start_pos"] = pos
-                rs = (grequests.get(self._base_url, params=params) for _ in range(pos, pos+self.worker))
+
+                gen_params = []
+                for x in range(pos, pos+records_per_page*self.worker, records_per_page):
+                    params = {"start_pos": x, "cmd": "GetScoreboard", "contest_id": self.contest_id, "show_type": "all"}
+                    gen_params.append(params)
+                # print(gen_params)
+                # print(pos, pos+self.worker)
+                # exit()
+                rs = (grequests.get(self._base_url, params=p) for p in gen_params)
                 res = grequests.map(rs)
-                print("pos {} out of total {}: {}%".format(pos, total, int(pos/total*100)))
 
                 for each_res in res:
                     try:
@@ -52,25 +58,21 @@ class GCJ:
                     except AttributeError:
                         continue
 
-                pos += self.worker
+                pos = pos + (records_per_page*self.worker)
+                print("pos {} out of total {}: {}%".format(pos, total, int(pos/total*100)))
+                if pos > total:
+                    break
 
     def download_source_code(self, problem_id):
-        # problem_id = 5634697451274240
+        records_per_page = 30
+        problem_id = '5634697451274240'
         def _download(urls, params):
             rs = (grequests.get(u) for u in urls)
             res = grequests.map(rs)
-            for each_res in res:
-                try:
-                    file_name = each_res.headers.get('Content-Disposition').split('=')[1]
 
-                    with open('raw/source/{}'.format(file_name), 'wb') as f:
-                        # print(file_name)
-                        f.write(each_res.content)
-                except:
-                    pass
 
         processed = 0
-        params = {"cmd": "GetSourceCode", "problem": problem_id, "io_set_id": "0", "username": ""}
+
         total = self.get_total_participants()
 
         with open('raw/scoreboard.json', 'r') as f:
@@ -78,23 +80,40 @@ class GCJ:
 
             for line in f:
                 line_data = json.loads(line)
-                # print(len(line_data['rows']))
-                # exit()
-                rs = (grequests.get(u, params) for u in urls)
-                res = grequests.map(rs)
 
-                rs = ()
+                gen_params = []
                 for v in line_data['rows']:
-                    username = v['n']
-                    params['username'] = v['n']
+                    params = {"cmd": "GetSourceCode", "problem": problem_id, "io_set_id": "0", "username": v['n']}
+                    gen_params.append(params)
+                # print(gen_params)
+                # exit()
 
+                rs = (grequests.get(self._base_url, params=p) for p in gen_params)
+                res = grequests.map(rs)
+                print(res)
+                # exit()
+                for each_res in res:
+                    try:
+                        file_name = each_res.headers.get('Content-Disposition').split('=')[1]
 
-                    batch_url.append(self._base_url)
-                    if len(batch_url) >= self.worker:
-                        _download()
+                        with open('raw/source/{}'.format(file_name), 'wb') as f:
+                            print(file_name)
+                            f.write(each_res.content)
+                    except:
+                        print('problem saving...')
+                        pass
 
-                        processed += threads
-                        print("pos {} out of {}: {}%".format(processed, total_participated, int(processed/total_participated*100)))
+                # for v in line_data['rows']:
+                #
+                #     params['username'] = v['n']
+                #
+                #
+                #     batch_url.append(self._base_url)
+                #     if len(batch_url) >= self.worker:
+                #         _download()
+                #
+                #         processed += threads
+                #         print("pos {} out of {}: {}%".format(processed, total_participated, int(processed/total_participated*100)))
 
     def detect_programming_language(file_path):
         with open('extensions.json') as data_file:
@@ -114,7 +133,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", help="What task to run", required=True)
     parser.add_argument("--contest-id", help="The contest id", required=True)
-    parser.add_argument("--worker", help="The # of worker", default=50, type=int)
+    parser.add_argument("--worker", help="The # of worker", default=60, type=int)
     parser.add_argument("--problem-id", help="The problem id")
     args = parser.parse_args()
 

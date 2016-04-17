@@ -1,4 +1,5 @@
 # Google Code Jam Analytics
+https://www.facebook.com/notes/kien-pham/google-code-jam-analytics/10153427936615951
 
 ## Overview
 **What is Google Code Jam?**
@@ -40,22 +41,3 @@ There are two set of raw data you can download: the scoreboard and the submissio
 
     # Download all code submission
     $ python gcj_analytics.py --contest-id 6254486 --task download-source-code
-
-## Notes
-### main index page
-https://code.google.com/codejam/contest/6254486/scoreboard#vt=1&vf=1
-
-### it returns 30 records by default
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetScoreboard&contest_id=6254486&show_type=all&start_pos=1
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetScoreboard&contest_id=6254486&show_type=all&start_pos=31
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetScoreboard&contest_id=6254486&show_type=all&start_pos=27151
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetScoreboard&contest_id=6254486&show_type=all&start_pos=27165
-
-### get source code for a user
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetSourceCode&problem=5652388522229760&io_set_id=0&username=Lewin
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetSourceCode&problem=5652388522229760&io_set_id=0&username=xiaowuc1
-
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetSourceCode&problem=5652388522229760&io_set_id=1&username=Lewin
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetSourceCode&problem=5634697451274240&io_set_id=0&username=Lewin
-
-https://code.google.com/codejam/contest/6254486/scoreboard/do/?cmd=GetSourceCode&problem=5634697451274240&io_set_id=0&username=kienpham

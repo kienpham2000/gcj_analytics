@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 import requests
 import operator
@@ -7,12 +8,18 @@ import grequests
 import yaml
 from zipfile import ZipFile
 import argparse
+import operator
+from collections import OrderedDict
+import operator
+from os import listdir
+from os.path import isfile, join
 
 class GCJ:
     def __init__(self, contest_id, worker):
         self.contest_id = contest_id.strip()
         self.worker = int(worker)
-        self._base_url = "https://code.google.com/codejam/contest/{}/scoreboard/do".format(contest_id)
+        self.url = "https://code.google.com/codejam/contest/{}/scoreboard/do".format(contest_id)
+        self.scoreboard_file_path = "raw/{}/scoreboard.json".format(contest_id)
 
     def get_stats(self):
         payload = {
@@ -23,21 +30,26 @@ class GCJ:
 
     def get_total_participants(self):
         params = {"cmd": "GetScoreboard", "contest_id": self.contest_id, "show_type": "all", "start_pos": 1}
-        total = requests.get(self._base_url, params).json()
+        total = requests.get(self.url, params).json()
 
         return total['stat']['nrp']
 
     def download_scoreboard(self):
         pos = 1
-        params = {"cmd": "GetScoreboard", "contest_id": self.contest_id, "show_type": "all", "start_pos": pos}
+        records_per_page = 30
         total = self.get_total_participants()
 
-        with open('raw/scoreboard.json', 'w') as f:
+        os.makedirs('raw/{}'.format(self.contest_id), exist_ok=True)
+        with open(self.scoreboard_file_path, 'w') as f:
             while True:
-                params["start_pos"] = pos
-                rs = (grequests.get(self._base_url, params=params) for _ in range(pos, pos+self.worker))
+
+                gen_params = []
+                for x in range(pos, pos+records_per_page*self.worker, records_per_page):
+                    params = {"start_pos": x, "cmd": "GetScoreboard", "contest_id": self.contest_id, "show_type": "all"}
+                    gen_params.append(params)
+
+                rs = (grequests.get(self.url, params=p) for p in gen_params)
                 res = grequests.map(rs)
-                print("pos {} out of total {}: {}%".format(pos, total, int(pos/total*100)))
 
                 for each_res in res:
                     try:
@@ -52,69 +64,100 @@ class GCJ:
                     except AttributeError:
                         continue
 
-                pos += self.worker
+                pos = pos + (records_per_page*self.worker)
+                print("pos {} out of total {}: {}%".format(pos, total, int(pos/total*100)))
+                if pos > total:
+                    break
 
     def download_source_code(self, problem_id):
-        # problem_id = 5634697451274240
-        def _download(urls, params):
-            rs = (grequests.get(u) for u in urls)
-            res = grequests.map(rs)
-            for each_res in res:
-                try:
-                    file_name = each_res.headers.get('Content-Disposition').split('=')[1]
-
-                    with open('raw/source/{}'.format(file_name), 'wb') as f:
-                        # print(file_name)
-                        f.write(each_res.content)
-                except:
-                    pass
-
+        records_per_page = 30
         processed = 0
-        params = {"cmd": "GetSourceCode", "problem": problem_id, "io_set_id": "0", "username": ""}
         total = self.get_total_participants()
 
-        with open('raw/scoreboard.json', 'r') as f:
+        os.makedirs('raw/{}/{}'.format(self.contest_id, problem_id), exist_ok=True)
+        with open(self.scoreboard_file_path, 'r') as f:
             batch_url = []
 
             for line in f:
                 line_data = json.loads(line)
-                # print(len(line_data['rows']))
-                # exit()
-                rs = (grequests.get(u, params) for u in urls)
-                res = grequests.map(rs)
 
-                rs = ()
+                gen_params = []
                 for v in line_data['rows']:
-                    username = v['n']
-                    params['username'] = v['n']
+                    params = {"cmd": "GetSourceCode", "problem": problem_id, "io_set_id": "0", "username": v['n']}
+                    gen_params.append(params)
+
+                rs = (grequests.get(self.url, params=p) for p in gen_params)
+                res = grequests.map(rs)
+                # print(res)
+                # exit()
+                for each_res in res:
+                    try:
+                        file_name = each_res.headers.get('Content-Disposition').split('=')[1]
+
+                        with open('raw/{}/{}/{}'.format(self.contest_id, problem_id, file_name), 'wb+') as f:
+                            print(file_name)
+                            f.write(each_res.content)
+                    except:
+                        print('problem download / saving file...')
+                        pass
 
 
-                    batch_url.append(self._base_url)
-                    if len(batch_url) >= self.worker:
-                        _download()
+    def countries(self):
+        countries = {}
 
-                        processed += threads
-                        print("pos {} out of {}: {}%".format(processed, total_participated, int(processed/total_participated*100)))
+        with open(self.scoreboard_file_path, 'r') as f:
+            for line in f:
+                line_data = json.loads(line)
 
-    def detect_programming_language(file_path):
+                for row in line_data['rows']:
+                    name = row['c']
+                    print(name)
+                    if name in countries:
+                        countries[name] += 1
+                    else:
+                        countries[name] = 1
+
+                    # users[row['n']] = {
+                    #     'country': row['c'],
+                    #     'penalty': row['pen'],
+                    #     'avatar': row['fu'],
+                    # }
+                    # countries[row['c']] = countries[row['c']] + 1 if row['c'] in countries else 1
+
+        countries = sorted(countries.items(), key=operator.itemgetter(1), reverse=True)
+        print(countries)
+
+    def detect_programming_language(self, problem_id):
         with open('extensions.json') as data_file:
             extensions = json.load(data_file)
 
-        languages = {}
-        input_zip=ZipFile('raw/source/kienpham_1_0.zip')
-        for name in input_zip.namelist():
-            try:
-                languages[extensions['.' + name.split('.')[1].lower()]] = 1
-            except:
-                languages['Unknown'] = 1
+        path = 'raw/{}/{}'.format(self.contest_id, problem_id)
+        files = [f for f in listdir(path) if isfile(join(path, f))]
 
+        languages = {}
+        for f in files:
+            input_zip = ZipFile("{}/{}".format(path, f))
+            for name in input_zip.namelist():
+                try:
+                    name = extensions['.' + name.split('.')[1].lower()]
+                    print(name)
+                    if name in languages:
+                        languages[name] += 1
+                    else:
+                        languages[name] = 1
+                except:
+                    languages['Unknown'] = 1
+
+        languages = sorted(languages.items(), key=operator.itemgetter(1), reverse=True)
+        # languages = OrderedDict(sorted(languages.items(), reverse=True))
+        print(languages)
         return languages
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--task", help="What task to run", required=True)
     parser.add_argument("--contest-id", help="The contest id", required=True)
-    parser.add_argument("--worker", help="The # of worker", default=50, type=int)
+    parser.add_argument("--worker", help="The # of worker", default=60, type=int)
     parser.add_argument("--problem-id", help="The problem id")
     args = parser.parse_args()
 
@@ -126,40 +169,16 @@ if __name__ == '__main__':
     if args.task == 'download-scoreboard':
         gcj.download_scoreboard()
     elif args.task == 'download-source-code':
+        if not args.problem_id:
+            exit('--problem-id is required')
         gcj.download_source_code(problem_id=args.problem_id)
+    elif args.task == 'detect-programming-language':
+        if not args.problem_id:
+            exit('--problem-id is required')
+        gcj.detect_programming_language(problem_id=args.problem_id)
     elif args.task == 'total-participants':
         print(gcj.get_total_participants())
     elif args.task == 'stats':
         print(gcj.get_stats())
-
-
-    # total_participated = 1
-    # countries = {}
-    # countries_top_30 = {}
-    # users = {}
-    # threads = 100
-    # download_scoreboard(contest_id)
-
-    # download_source_code()
-    # exit()
-
-    # detect_programming_language()
-    # exit()
-    #
-    # stats = page_data['stat']
-    # total_participated = page_data['stat']['nrp']
-    #
-    # for row in page_data['rows']:
-    #     users[row['n']] = {
-    #         'country': row['c'],
-    #         'penalty': row['pen'],
-    #         'avatar': row['fu'],
-    #     }
-    #
-    #     countries[row['c']] = countries[row['c']] + 1 if row['c'] in countries else 1
-    #
-    # if pos == 1:
-    #     countries_top_30 = sorted(countries.items(), key=operator.itemgetter(1), reverse=True)
-
-    # print(countries_top_30)
-    # print(stats)
+    elif args.task == 'countries':
+        gcj.countries()
